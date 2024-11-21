@@ -18,7 +18,6 @@ var rsp = &http.Response{
 }
 
 func TestError(t *testing.T) {
-
 	underlying := errors.New("test error")
 
 	err := api.WrapDecodingError(rsp, underlying)

@@ -50,7 +50,6 @@ func (e *Error) Error() string {
 	default:
 		return fmt.Sprintf("%s: %v", e.Response.Status, e.Err)
 	}
-
 }
 
 // Unwrap returns the underlying error.

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/go-api-libs/api"
@@ -14,6 +15,9 @@ var rsp = &http.Response{
 	StatusCode: http.StatusTeapot,
 	Header: http.Header{
 		"Content-Type": []string{"application/json"},
+	},
+	Request: &http.Request{
+		URL: &url.URL{Scheme: "https", Host: "www.example.com", Path: "/foo"},
 	},
 }
 
@@ -61,6 +65,17 @@ func TestErrUnknownStatusCode(t *testing.T) {
 		t.Fatalf("expected error to be %s, got: %s", want, err)
 	} else if !errors.Is(err, api.ErrUnknownStatusCode) {
 		t.Fatalf("expected error to be %v, got %v", api.ErrUnknownStatusCode, err)
+	}
+}
+
+func TestErrStatusCode(t *testing.T) {
+	err := api.NewErrStatusCode(rsp)
+	if err == nil {
+		t.Fatal("expected error")
+	} else if want := `got 418 I'm a teapot calling https://www.example.com/foo`; err.Error() != want {
+		t.Fatalf("expected error to be %s, got: %s", want, err)
+	} else if !errors.Is(err, api.ErrStatusCode) {
+		t.Fatalf("expected error to be %v, got %v", api.ErrStatusCode, err)
 	}
 }
 

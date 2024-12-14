@@ -55,6 +55,16 @@ func TestError(t *testing.T) {
 			t.Fatalf("expected content type to be application/json, got %s", ct)
 		}
 	})
+
+	t.Run("api.WrapError", func(t *testing.T) {
+		if err := api.WrapError(rsp, underlying); err == nil {
+			t.Fatal("expected error")
+		} else if want := `418 I'm a teapot: test error`; err.Error() != want {
+			t.Fatalf("expected error to be %s, got: %s", want, err)
+		} else if !errors.Is(err, underlying) {
+			t.Fatalf("expected error to be %v, got %v", underlying, err)
+		}
+	})
 }
 
 func TestErrUnknownStatusCode(t *testing.T) {

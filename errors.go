@@ -78,3 +78,10 @@ func (d DecodingError) Error() string {
 func WrapDecodingError(rsp *http.Response, err error) error {
 	return &Error{Response: rsp, Err: &DecodingError{Err: err}}
 }
+
+// WrapError wraps the error in an api.Error.
+// Use this if the status code is unsuccessful and the API returns more information,
+// e.g. as part of a JSON that can be parsed and transformed into an error.
+func WrapError(rsp *http.Response, err error) error {
+	return &Error{Response: rsp, Err: err}
+}

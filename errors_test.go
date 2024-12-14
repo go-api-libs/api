@@ -56,13 +56,18 @@ func TestError(t *testing.T) {
 		}
 	})
 
-	t.Run("api.WrapError", func(t *testing.T) {
-		if err := api.WrapError(rsp, underlying); err == nil {
+	t.Run("api.NewErrCustom", func(t *testing.T) {
+		apiErr := &api.Error{}
+		if err := api.NewErrCustom(rsp, underlying); err == nil {
 			t.Fatal("expected error")
 		} else if want := `418 I'm a teapot: test error`; err.Error() != want {
 			t.Fatalf("expected error to be %s, got: %s", want, err)
 		} else if !errors.Is(err, underlying) {
 			t.Fatalf("expected error to be %v, got %v", underlying, err)
+		} else if !errors.As(err, &apiErr) {
+			t.Fatalf("expected error to be api.Error, got %v", err)
+		} else if !apiErr.IsCustom {
+			t.Fatalf("expected error to be custom, got %v", apiErr.IsCustom)
 		}
 	})
 }

@@ -1,4 +1,8 @@
 # Standardized API Error Handling for Go
+[![Go Reference](https://pkg.go.dev/badge/github.com/go-api-libs/api.svg)](https://pkg.go.dev/github.com/go-api-libs/api)
+[![Go Report Card](https://goreportcard.com/badge/github.com/go-api-libs/api)](https://goreportcard.com/report/github.com/go-api-libs/api)
+![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 This library provides a set of common error definitions used across various API interactions. By using this library, you can achieve consistent error handling in your applications, making it easier to debug, maintain, and integrate with different services.
 

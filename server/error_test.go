@@ -16,7 +16,7 @@ func TestNewError_NilPanic(t *testing.T) {
 			t.Fatal("expected NewError to panic with nil underlying error")
 		}
 	}()
-	server.NewError(http.StatusInternalServerError, nil)
+	_ = server.NewError(http.StatusInternalServerError, nil)
 }
 
 func TestNewError(t *testing.T) {

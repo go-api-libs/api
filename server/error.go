@@ -77,8 +77,14 @@ func defaultMessage(code int) string {
 		return "Authentication required"
 	case http.StatusForbidden:
 		return "You don't have permission to perform this action"
+	case http.StatusNotFound:
+		return "Resource not found"
 	case http.StatusUnprocessableEntity:
 		return "Validation error"
+	}
+
+	if code >= 500 {
+		return "Internal server error"
 	}
 
 	return http.StatusText(code) // fallback

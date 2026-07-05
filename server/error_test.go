@@ -1,3 +1,5 @@
+//go:build goexperiment.jsonv2
+
 package server_test
 
 import (
@@ -28,6 +30,7 @@ func TestNewError(t *testing.T) {
 		{http.StatusForbidden, "You don't have permission to perform this action"},
 		{http.StatusNotFound, "Resource not found"},
 		{http.StatusUnprocessableEntity, "Validation error"},
+		{http.StatusNotImplemented, "Not implemented"},
 		{http.StatusInternalServerError, "Internal server error"},
 		{http.StatusServiceUnavailable, "Internal server error"},
 		{http.StatusBadRequest, "Bad Request"},

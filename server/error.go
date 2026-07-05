@@ -70,16 +70,36 @@ func (e *Error) WithRequestID(id uuid.UUID) *Error {
 
 func isClientError(code int) bool { return code >= 400 && code < 500 }
 
-// defaultMessage returns a user-friendly message.
+// defaultMessage returns a user-friendly message for the given HTTP status code.
+// Custom strings are used where http.StatusText is either misleading (401 says
+// "Unauthorized" but means "unauthenticated"), too jargon-heavy for end users
+// (422 "Unprocessable Entity"), or where sentence case consistency matters more
+// than saving a line of code. Everything else falls back to http.StatusText.
 func defaultMessage(code int) string {
 	switch code {
 	case http.StatusUnauthorized:
+		// "Unauthorized" is a misnomer in the HTTP spec; it means the request
+		// lacks valid credentials, not that the action is forbidden.
 		return "Authentication required"
 	case http.StatusForbidden:
 		return "You don't have permission to perform this action"
+	case http.StatusNotFound:
+		return "Resource not found"
 	case http.StatusUnprocessableEntity:
+		// "Unprocessable Entity" is HTTP jargon; "Validation error" is what
+		// API clients and end users actually expect to see.
 		return "Validation error"
+	case http.StatusNotImplemented:
+		// 501 is the one 5xx code safe to surface: it describes a missing
+		// feature, not an infrastructure failure.
+		return "Not implemented"
 	}
 
-	return http.StatusText(code) // fallback
+	if code >= 500 {
+		// Suppress specific 5xx text (e.g. "Bad Gateway", "Gateway Timeout")
+		// to avoid leaking topology details about upstream dependencies.
+		return "Internal server error"
+	}
+
+	return http.StatusText(code)
 }

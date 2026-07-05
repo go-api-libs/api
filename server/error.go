@@ -81,6 +81,8 @@ func defaultMessage(code int) string {
 		return "Resource not found"
 	case http.StatusUnprocessableEntity:
 		return "Validation error"
+	case http.StatusNotImplemented:
+		return "Not implemented"
 	}
 
 	if code >= 500 {

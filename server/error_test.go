@@ -121,8 +121,7 @@ func TestError_Unwrap(t *testing.T) {
 		t.Fatal("errors.Is: did not find underlying error")
 	}
 
-	var target *server.Error
-	if !errors.As(err, &target) {
+	if _, ok := errors.AsType[*server.Error](err); !ok {
 		t.Fatal("errors.As: did not match *server.Error")
 	}
 }

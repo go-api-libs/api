@@ -18,6 +18,7 @@ func TestNewError_NilPanic(t *testing.T) {
 			t.Fatal("expected NewError to panic with nil underlying error")
 		}
 	}()
+
 	_ = server.NewError(http.StatusInternalServerError, nil)
 }
 
@@ -38,19 +39,24 @@ func TestNewError(t *testing.T) {
 	}
 	for _, tc := range tests {
 		underlying := errors.New("test")
+
 		err := server.NewError(tc.code, underlying)
 		if err == nil {
 			t.Fatalf("[%d] expected non-nil error", tc.code)
 		}
+
 		if err.Code != tc.code {
 			t.Fatalf("[%d] Code: got %d, want %d", tc.code, err.Code, tc.code)
 		}
+
 		if err.Message != tc.wantMessage {
 			t.Fatalf("[%d] Message: got %q, want %q", tc.code, err.Message, tc.wantMessage)
 		}
+
 		if err.Detail != "" {
 			t.Fatalf("[%d] Detail: got %q, want empty", tc.code, err.Detail)
 		}
+
 		if err.RequestID != uuid.Nil {
 			t.Fatalf("[%d] RequestID: got %v, want Nil", tc.code, err.RequestID)
 		}
@@ -209,6 +215,7 @@ func TestError_MarshalJSON(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Marshal: %v", err)
 			}
+
 			if got := string(b); got != tc.want {
 				t.Fatalf("got  %s\nwant %s", got, tc.want)
 			}
@@ -249,15 +256,19 @@ func TestError_UnmarshalJSON(t *testing.T) {
 			if err := json.Unmarshal([]byte(tc.input), &e); err != nil {
 				t.Fatalf("Unmarshal: %v", err)
 			}
+
 			if e.Code != tc.wantCode {
 				t.Fatalf("Code: got %d, want %d", e.Code, tc.wantCode)
 			}
+
 			if e.Message != tc.wantMsg {
 				t.Fatalf("Message: got %q, want %q", e.Message, tc.wantMsg)
 			}
+
 			if e.Detail != tc.wantDetail {
 				t.Fatalf("Detail: got %q, want %q", e.Detail, tc.wantDetail)
 			}
+
 			if e.RequestID != tc.wantID {
 				t.Fatalf("RequestID: got %v, want %v", e.RequestID, tc.wantID)
 			}
@@ -284,12 +295,15 @@ func TestError_RoundTrip(t *testing.T) {
 	if got.Code != original.Code {
 		t.Fatalf("Code: got %d, want %d", got.Code, original.Code)
 	}
+
 	if got.Message != original.Message {
 		t.Fatalf("Message: got %q, want %q", got.Message, original.Message)
 	}
+
 	if got.Detail != original.Detail {
 		t.Fatalf("Detail: got %q, want %q", got.Detail, original.Detail)
 	}
+
 	if got.RequestID != original.RequestID {
 		t.Fatalf("RequestID: got %v, want %v", got.RequestID, original.RequestID)
 	}

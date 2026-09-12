@@ -1,0 +1,5 @@
+- **Wrap Errors**: Easily wrap underlying errors with API-specific errors to provide more context.
+- **Error Identification**: Check and identify the nature of errors using Go's `errors.Is` and `errors.As` functions.
+- **Custom Errors**: Define and use custom errors specific to your API needs.
+- **Status Code Handling**: Handle and identify errors based on HTTP status codes.
+- **Content Type Handling**: Handle errors based on content type mismatches.

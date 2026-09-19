@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/google/uuid"
+	"uuid"
 )
 
 // Error is an error returned by the API server.
@@ -23,7 +22,7 @@ func (e *Error) Error() string {
 	b := &strings.Builder{}
 	fmt.Fprintf(b, "%d %s", e.Code, e.Message)
 
-	if e.RequestID != uuid.Nil {
+	if e.RequestID != uuid.Nil() {
 		fmt.Fprintf(b, " [%s]", e.RequestID)
 	}
 

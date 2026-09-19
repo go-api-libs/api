@@ -7,9 +7,9 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"uuid"
 
 	"github.com/go-api-libs/api/server"
-	"github.com/google/uuid"
 )
 
 func TestNewError_NilPanic(t *testing.T) {
@@ -57,7 +57,7 @@ func TestNewError(t *testing.T) {
 			t.Fatalf("[%d] Detail: got %q, want empty", tc.code, err.Detail)
 		}
 
-		if err.RequestID != uuid.Nil {
+		if err.RequestID != uuid.Nil() {
 			t.Fatalf("[%d] RequestID: got %v, want Nil", tc.code, err.RequestID)
 		}
 	}
@@ -242,12 +242,12 @@ func TestError_UnmarshalJSON(t *testing.T) {
 		{
 			"partial object",
 			`{"code":500,"message":"Internal server error"}`,
-			500, "Internal server error", "", uuid.Nil,
+			500, "Internal server error", "", uuid.Nil(),
 		},
 		{
 			"empty object",
 			`{}`,
-			0, "", "", uuid.Nil,
+			0, "", "", uuid.Nil(),
 		},
 	}
 	for _, tc := range tests {

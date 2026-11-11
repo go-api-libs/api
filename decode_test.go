@@ -3,11 +3,11 @@ package api_test
 import (
 	"encoding/json/v2"
 	"errors"
-	"io"
-	"net/http"
-	"strings"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/MarkRosemaker/cassette"
 	"github.com/go-api-libs/api"
 )
 
@@ -15,71 +15,84 @@ type thing struct {
 	Name string `json:"name"`
 }
 
-func withBody(body string) *http.Response {
-	r := *rsp
-	r.Body = io.NopCloser(strings.NewReader(body))
-
-	return &r
-}
-
-func TestDecodeJSON(t *testing.T) {
+func TestDecodeLenient(t *testing.T) {
 	strict := json.RejectUnknownMembers(true)
-	extra := `{"name":"a","new":1}`
-
-	t.Run("decodes", func(t *testing.T) {
-		got, err := api.DecodeJSON[thing](withBody(`{"name":"a"}`), strict, nil, nil)
-		if err != nil || got.Name != "a" {
-			t.Fatalf("got %+v, %v", got, err)
-		}
-	})
+	errStrict := errors.New("unknown member")
+	recorded := func(body string) *cassette.Interaction {
+		return &cassette.Interaction{Response: cassette.Response{StatusCode: rsp.StatusCode, Body: cassette.Body(body)}}
+	}
 
 	t.Run("not in debug mode", func(t *testing.T) {
-		got, err := api.DecodeJSON[thing](withBody(extra), strict, []byte(extra), nil)
+		out := thing{Name: "partly decoded"}
+
+		err := api.DecodeLenient(rsp, errStrict, nil, filepath.Join(t.TempDir(), "x.json"), &out, strict)
+		if !errors.Is(err, errStrict) {
+			t.Fatalf("got %v, want %v", err, errStrict)
+		}
+
 		if decErr := (*api.DecodingError)(nil); !errors.As(err, &decErr) {
 			t.Fatalf("got %v, want a decoding error", err)
 		}
 
-		if apiErr := (*api.Error)(nil); !errors.As(err, &apiErr) || apiErr.Response.StatusCode != rsp.StatusCode {
+		if apiErr := (*api.Error)(nil); !errors.As(err, &apiErr) || apiErr.Response != rsp {
 			t.Fatalf("got %v, want an error with the response", err)
-		}
-
-		if got != (thing{}) {
-			t.Fatalf("got %+v, want the zero value", got)
 		}
 	})
 
-	t.Run("debug mode keeps the call and decodes leniently", func(t *testing.T) {
-		kept := 0
-		got, err := api.DecodeJSON[thing](withBody(extra), strict, []byte(extra), func() error { kept++; return nil })
-		if err != nil || got.Name != "a" || kept != 1 {
-			t.Fatalf("got %+v, %v, kept %d times", got, err, kept)
+	t.Run("keeps the call and decodes leniently", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "interactions.json")
+		out := thing{Name: "partly decoded"}
+
+		if err := api.DecodeLenient(rsp, errStrict, recorded(`{"name":"a","new":1}`), file, &out, strict); err != nil {
+			t.Fatal(err)
+		}
+
+		if out.Name != "a" {
+			t.Fatalf("got %+v", out)
+		}
+
+		kept, err := cassette.InteractionsReadFile(file)
+		if err != nil || len(kept) != 1 {
+			t.Fatalf("kept %d interactions, %v", len(kept), err)
+		}
+	})
+
+	t.Run("starts afresh", func(t *testing.T) {
+		out := thing{Name: "partly decoded"}
+
+		if err := api.DecodeLenient(rsp, errStrict, recorded(`{}`), filepath.Join(t.TempDir(), "x.json"), &out, strict); err != nil {
+			t.Fatal(err)
+		}
+
+		if out != (thing{}) {
+			t.Fatalf("got %+v, want what the recorded body holds alone", out)
 		}
 	})
 
 	t.Run("keeping fails", func(t *testing.T) {
-		errKeep := errors.New("disk full")
-		got, err := api.DecodeJSON[thing](withBody(extra), strict, []byte(extra), func() error { return errKeep })
-		if !errors.Is(err, errKeep) {
-			t.Fatalf("got %v, want %v", err, errKeep)
+		dir := filepath.Join(t.TempDir(), "file")
+		if err := os.WriteFile(dir, nil, 0o600); err != nil {
+			t.Fatal(err)
 		}
 
-		if decErr := (*api.DecodingError)(nil); !errors.As(err, &decErr) {
-			t.Fatalf("got %v, want a decoding error too", err)
+		var out thing
+
+		err := api.DecodeLenient(rsp, errStrict, recorded(`{"name":"a"}`), filepath.Join(dir, "x.json"), &out, strict)
+		if !errors.Is(err, errStrict) {
+			t.Fatalf("got %v, want %v too", err, errStrict)
 		}
 
-		if got != (thing{}) {
-			t.Fatalf("got %+v, want the zero value", got)
+		if joined, ok := err.(interface{ Unwrap() []error }); !ok || len(joined.Unwrap()) != 2 {
+			t.Fatalf("got %v, want the error keeping the call joined to it", err)
 		}
 	})
 
 	t.Run("not even leniently", func(t *testing.T) {
-		got, err := api.DecodeJSON[thing](withBody(`[1]`), strict, []byte(`[1]`), func() error { return nil })
+		var out thing
+
+		err := api.DecodeLenient(rsp, errStrict, recorded(`[1]`), filepath.Join(t.TempDir(), "x.json"), &out, strict)
 		if decErr := (*api.DecodingError)(nil); !errors.As(err, &decErr) {
 			t.Fatalf("got %v, want a decoding error", err)
-		}
-
-		if got != (thing{}) {
-			t.Fatalf("got %+v, want the zero value", got)
 		}
 	})
 }

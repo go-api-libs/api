@@ -4,35 +4,33 @@ import (
 	"encoding/json/v2"
 	"errors"
 	"net/http"
+
+	"github.com/MarkRosemaker/cassette"
 )
 
-// DecodeJSON reads the body of rsp as JSON into a T, as opts say.
+// DecodeLenient is a debug-capable client's second try at a response body it could not decode as opts say, err
+// being why. Decoding it the first time is the client's own, so that a client not in debug mode does nothing more
+// than decode.
 //
-// A client in debug mode also passes keep, which keeps the call for later, and recorded, the body it read and kept a
-// copy of. A body that does not decode as opts say is then kept, and decoded again from recorded with members the
-// specification does not know allowed, so that the response is still of use while its new members wait to be added.
-// Without keep, recorded is not read.
-//
-// It returns the zero T with any error, which is a [DecodingError] in an [Error], joined with keep's error, if any.
-func DecodeJSON[T any](rsp *http.Response, opts json.Options, recorded []byte, keep func() error) (T, error) {
-	var out T
-
-	err := json.UnmarshalRead(rsp.Body, &out, opts)
-	switch {
-	case err == nil:
-		return out, nil
-	case keep == nil:
-		return *new(T), WrapDecodingError(rsp, err)
+// In debug mode, ia is the call the client recorded: DecodeLenient adds it to the interactions in debugFile, for
+// openapi-enrich to learn from, and decodes the body ia recorded into out again, with members the specification does
+// not know allowed, so that the response is still of use while they wait to be added. Without debug mode, ia is nil,
+// and it returns err as a decoding error.
+func DecodeLenient[T any](rsp *http.Response, err error, ia *cassette.Interaction, debugFile string, out *T,
+	opts json.Options,
+) error {
+	if ia == nil {
+		return WrapDecodingError(rsp, err)
 	}
 
-	if kerr := keep(); kerr != nil {
-		return *new(T), errors.Join(WrapDecodingError(rsp, err), kerr)
+	if kerr := cassette.AddInteraction(debugFile, ia); kerr != nil {
+		return errors.Join(WrapDecodingError(rsp, err), kerr)
 	}
 
-	out = *new(T)
-	if err := json.Unmarshal(recorded, &out, opts, json.RejectUnknownMembers(false)); err != nil {
-		return *new(T), WrapDecodingError(rsp, err)
+	*out = *new(T)
+	if err := json.Unmarshal(ia.Response.Body, out, opts, json.RejectUnknownMembers(false)); err != nil {
+		return WrapDecodingError(rsp, err)
 	}
 
-	return out, nil
+	return nil
 }

@@ -1,8 +1,8 @@
 cloud.google.com/go v0.123.0 h1:2NAUJwPR47q+E35uaJeYoNhuNEM9kM8SjgRgdeOJUSE=
 cloud.google.com/go v0.123.0/go.mod h1:xBoMV08QcqUGuPW65Qfm1o9Y4zKZBpGS+7bImXLTAZU=
-github.com/MarkRosemaker/cassette v0.0.0-20261111155207-3bee9a17aeeb h1:uHcLB/K6lpXVmt70MDdULISZDz7bS4Vu31LyN7u/vSo=
-github.com/MarkRosemaker/cassette v0.0.0-20261111155207-3bee9a17aeeb/go.mod h1:8JkO8rCe7/q8Rvf3OmMNkzTBiIzPpDQusd54xiUl91A=
-github.com/MarkRosemaker/jsonutil v0.0.0-20261111155129-3eb35e1f56f9 h1:7YhXWP+wCMe5zp8Q82bo3Qu69ROTPdpExETFtOm97HM=
-github.com/MarkRosemaker/jsonutil v0.0.0-20261111155129-3eb35e1f56f9/go.mod h1:SzjJlgYFlzpbFGvUUoQgfEsWlbai63bvhDPK8J0MNYM=
+github.com/MarkRosemaker/cassette v0.0.0-20261114002915-7d8492d51b15 h1:2HIzS2ge8W7CTU/d9vStI5e9/GU+nVLIoWpEflw+HOE=
+github.com/MarkRosemaker/cassette v0.0.0-20261114002915-7d8492d51b15/go.mod h1:6JYcQAI6NBN1qaBDf+y22Hf1dZYtoGsnkdfCrxp0zZM=
+github.com/MarkRosemaker/jsonutil v0.0.0-20261114002746-7598c9df8b8f h1:6afwNNJoD4mtQHfPli8xUyKsKHLFuqSNgvAD7jRMlv0=
+github.com/MarkRosemaker/jsonutil v0.0.0-20261114002746-7598c9df8b8f/go.mod h1:SzjJlgYFlzpbFGvUUoQgfEsWlbai63bvhDPK8J0MNYM=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=

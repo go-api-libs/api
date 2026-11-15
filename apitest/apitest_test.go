@@ -223,6 +223,89 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestRoundTrip_UnknownMember(t *testing.T) {
+	strict := json.JoinOptions(json.DefaultOptionsV2(), json.RejectUnknownMembers(true))
+
+	// refused, as a strict decoder does
+	apitest.RoundTrip(t, item{ID: "a"}, func(item) bool { return true }, strict)
+
+	// kept, as additional properties are
+	apitest.RoundTrip(t, map[string]bool{"a": true}, func(map[string]bool) bool { return true }, strict)
+
+	if f := run(func(t testing.TB) {
+		apitest.RoundTrip(t, item{ID: "a"}, func(item) bool { return true }, json.DefaultOptionsV2())
+	}); !f.failed("dropping the member no type declares") {
+		t.Errorf("dropped: got %q", f.errs)
+	}
+}
+
+// union is a union of a number or a string, holding neither while both are nil, as openapi-codegen writes one.
+type union struct {
+	N *int
+	S *string
+}
+
+func (u union) MarshalJSON() ([]byte, error) {
+	switch {
+	case u.N != nil:
+		return json.Marshal(*u.N)
+	case u.S != nil:
+		return json.Marshal(*u.S)
+	default:
+		return []byte("null"), nil
+	}
+}
+
+func (u *union) UnmarshalJSON(b []byte) error {
+	*u = union{}
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	return json.Unmarshal(b, &u.N)
+}
+
+// stuck holds what null decodes as, a value of its own.
+type stuck struct{ set bool }
+
+func (stuck) MarshalJSON() ([]byte, error) { return []byte("null"), nil }
+
+func (s *stuck) UnmarshalJSON([]byte) error {
+	s.set = true
+	return nil
+}
+
+func TestNull(t *testing.T) {
+	opts := json.DefaultOptionsV2()
+
+	apitest.Null[union](t, opts)
+
+	if f := run(func(t testing.TB) { apitest.Null[item](t, opts) }); !f.failed("the zero apitest_test.item encoded as {}, want null") {
+		t.Errorf("not null: got %q", f.errs)
+	}
+
+	if f := run(func(t testing.TB) { apitest.Null[stuck](t, opts) }); !f.failed("null decoded as {set:true}") {
+		t.Errorf("null as a value: got %q", f.errs)
+	}
+
+	if f := run(func(t testing.TB) { apitest.Null[int](t, opts) }); !f.failed("encoded as 0") {
+		t.Errorf("a number: got %q", f.errs)
+	}
+
+	if f := run(func(t testing.TB) { apitest.Null[chan int](t, opts) }); !f.fatal {
+		t.Error("what does not encode: no failure")
+	}
+
+	if f := run(func(t testing.TB) {
+		apitest.Null[item](t, json.JoinOptions(opts, json.WithUnmarshalers(
+			json.UnmarshalFunc(func([]byte, *item) error { return fmt.Errorf("no") }),
+		)))
+	}); !f.failed("null: json: cannot unmarshal JSON null into Go *apitest_test.item: no") {
+		t.Errorf("what does not decode: got %q", f.errs)
+	}
+}
+
 // interactionsFile writes ias to a file of a test's own and returns its path.
 func interactionsFile(t *testing.T, ias cassette.Interactions) string {
 	t.Helper()

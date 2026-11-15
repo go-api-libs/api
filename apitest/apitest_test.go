@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -297,11 +298,14 @@ func TestNull(t *testing.T) {
 		t.Error("what does not encode: no failure")
 	}
 
+	// json words its errors differently from run to run, so only what Null and the unmarshaler say is checked
 	if f := run(func(t testing.TB) {
 		apitest.Null[item](t, json.JoinOptions(opts, json.WithUnmarshalers(
-			json.UnmarshalFunc(func([]byte, *item) error { return fmt.Errorf("no") }),
+			json.UnmarshalFunc(func([]byte, *item) error { return errors.New("refusing null") }),
 		)))
-	}); !f.failed("null: json: cannot unmarshal JSON null into Go *apitest_test.item: no") {
+	}); !slices.ContainsFunc(f.errs, func(e string) bool {
+		return strings.HasPrefix(e, "null: ") && strings.HasSuffix(e, ": refusing null")
+	}) {
 		t.Errorf("what does not decode: got %q", f.errs)
 	}
 }

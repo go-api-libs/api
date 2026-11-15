@@ -1,11 +1,11 @@
-package page_test
+package paging_test
 
 import (
 	"errors"
 	"slices"
 	"testing"
 
-	"github.com/go-api-libs/api/page"
+	"github.com/go-api-libs/api/paging"
 )
 
 // list is a page of a list: its items, and the cursor of the next page if there is one.
@@ -53,7 +53,7 @@ func TestItems(t *testing.T) {
 
 	var got []string
 
-	for item, err := range page.Items(page.Pages(l.fetch, next), items) {
+	for item, err := range paging.Items(paging.Pages(l.fetch, next), items) {
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -76,7 +76,7 @@ func TestBreak(t *testing.T) {
 
 	l := newLists()
 
-	for _, err := range page.Items(page.Pages(l.fetch, next), items) {
+	for _, err := range paging.Items(paging.Pages(l.fetch, next), items) {
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -90,7 +90,7 @@ func TestBreak(t *testing.T) {
 
 	l = newLists()
 
-	for _, err := range page.Pages(l.fetch, next) {
+	for _, err := range paging.Pages(l.fetch, next) {
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -115,7 +115,7 @@ func TestError(t *testing.T) {
 		errs []error
 	)
 
-	for item, err := range page.Items(page.Pages(l.fetch, next), items) {
+	for item, err := range paging.Items(paging.Pages(l.fetch, next), items) {
 		if err != nil {
 			errs = append(errs, err)
 			continue

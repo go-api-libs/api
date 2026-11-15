@@ -1,5 +1,5 @@
-// Package page yields what an API lists a page at a time, fetching each page as the one before is used up.
-package page
+// Package paging yields what an API lists a page at a time, fetching each page as the one before is used up.
+package paging
 
 import "iter"
 

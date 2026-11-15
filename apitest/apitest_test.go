@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,6 +27,7 @@ type fakeT struct {
 
 	mu       sync.Mutex
 	errs     []string
+	errors   []error // the errors among what was reported, to check by errors.Is and errors.AsType
 	fatal    bool
 	cleanups []func()
 }
@@ -39,6 +41,12 @@ func (f *fakeT) Errorf(format string, args ...any) {
 	defer f.mu.Unlock()
 
 	f.errs = append(f.errs, fmt.Sprintf(format, args...))
+
+	for _, a := range args {
+		if err, ok := a.(error); ok {
+			f.errors = append(f.errors, err)
+		}
+	}
 }
 
 func (f *fakeT) Fatalf(format string, args ...any) {
@@ -68,6 +76,19 @@ func run(fn func(t testing.TB)) *fakeT {
 	}
 
 	return f
+}
+
+// reported reports whether an error reported is target, or wraps it.
+func (f *fakeT) reported(target error) bool {
+	return slices.ContainsFunc(f.errors, func(err error) bool { return errors.Is(err, target) })
+}
+
+// semantic reports whether an error reported is json's, about a value of a Go type, not its syntax.
+func (f *fakeT) semantic() bool {
+	return slices.ContainsFunc(f.errors, func(err error) bool {
+		_, ok := errors.AsType[*json.SemanticError](err)
+		return ok
+	})
 }
 
 func (f *fakeT) failed(contains string) bool {
@@ -142,7 +163,7 @@ func TestMustDecode(t *testing.T) {
 	}
 
 	f := run(func(t testing.TB) { apitest.MustDecode[item](t, `{"id":1}`, json.DefaultOptionsV2()) })
-	if !f.fatal || !f.failed(`decoding {"id":1}`) {
+	if !f.fatal || !f.failed(`decoding {"id":1}`) || !f.semantic() {
 		t.Errorf("what does not decode: got %q", f.errs)
 	}
 }
@@ -190,6 +211,9 @@ func (drifting) MarshalJSON() ([]byte, error) {
 
 func (d *drifting) UnmarshalJSON(b []byte) error { return json.Unmarshal(b, &d.N) }
 
+// errRefused is what an unmarshaler of a test says, refusing to decode.
+var errRefused = errors.New("refused")
+
 func TestRoundTrip(t *testing.T) {
 	n := 1
 	opts := json.DefaultOptionsV2()
@@ -201,6 +225,8 @@ func TestRoundTrip(t *testing.T) {
 	}); !f.failed("decoded as another variant") {
 		t.Errorf("another variant: got %q", f.errs)
 	}
+
+	drifts = 0 // counted afresh each run, as with -count
 
 	if f := run(func(t testing.TB) {
 		apitest.RoundTrip(t, drifting{}, func(drifting) bool { return true }, opts)
@@ -216,9 +242,9 @@ func TestRoundTrip(t *testing.T) {
 
 	if f := run(func(t testing.TB) {
 		apitest.RoundTrip(t, item{ID: "a"}, func(item) bool { return true }, json.JoinOptions(opts, json.WithUnmarshalers(
-			json.UnmarshalFunc(func([]byte, *item) error { return fmt.Errorf("no") }),
+			json.UnmarshalFunc(func([]byte, *item) error { return errRefused }),
 		)))
-	}); !f.fatal || !f.failed("no") {
+	}); !f.fatal || !f.reported(errRefused) || !f.semantic() {
 		t.Errorf("what does not decode: got %q", f.errs)
 	}
 }
@@ -299,9 +325,9 @@ func TestNull(t *testing.T) {
 
 	if f := run(func(t testing.TB) {
 		apitest.Null[item](t, json.JoinOptions(opts, json.WithUnmarshalers(
-			json.UnmarshalFunc(func([]byte, *item) error { return fmt.Errorf("no") }),
+			json.UnmarshalFunc(func([]byte, *item) error { return errRefused }),
 		)))
-	}); !f.failed("null: json: cannot unmarshal JSON null into Go *apitest_test.item: no") {
+	}); !f.reported(errRefused) || !f.semantic() || !f.failed("null: ") {
 		t.Errorf("what does not decode: got %q", f.errs)
 	}
 }

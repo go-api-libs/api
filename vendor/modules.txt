@@ -1,7 +1,7 @@
 # cloud.google.com/go v0.123.0
 ## explicit; go 1.24.0
 cloud.google.com/go/civil
-# github.com/MarkRosemaker/cassette v0.0.0-20261124110309-32c9c69cd6ad
+# github.com/MarkRosemaker/cassette v0.0.0-20261124134158-2243379a46d0
 ## explicit; go 1.27
 github.com/MarkRosemaker/cassette
 # github.com/MarkRosemaker/jsonutil v0.0.0-20261118230255-4b04cfc02484

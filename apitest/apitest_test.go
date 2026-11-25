@@ -386,9 +386,9 @@ func call(t testing.TB, rt http.RoundTripper, ctx context.Context, method, rawUR
 func TestReplay(t *testing.T) {
 	json1 := http.Header{"Content-Type": {"application/json"}}
 
-	t.Run("answers as recorded, a body with a tag the recording leaves out too", func(t *testing.T) {
+	t.Run("answers as recorded, but for the recording tool's headers, a body with a tag the recording leaves out too", func(t *testing.T) {
 		path := interactionsFile(t, cassette.Interactions{
-			recorded(t, http.MethodGet, "https://api.example.com/a", "", `{"id":"a"}`, http.Header{}),
+			recorded(t, http.MethodGet, "https://api.example.com/a", "", `{"id":"a"}`, http.Header{"Accept": {"application/json"}}),
 			recorded(t, http.MethodPost, "https://api.example.com/q", `{"filter":{"date":{"equals":"today"}}}`, `{}`, json1),
 		})
 

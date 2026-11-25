@@ -2,7 +2,7 @@ module github.com/go-api-libs/api
 
 go 1.27
 
-require github.com/MarkRosemaker/cassette v0.0.0-20261124170238-3b0b504cc01a
+require github.com/MarkRosemaker/cassette v0.0.0-20261125180338-b758ec7cd132
 
 require (
 	cloud.google.com/go v0.123.0 // indirect

@@ -386,7 +386,7 @@ func call(t testing.TB, rt http.RoundTripper, ctx context.Context, method, rawUR
 func TestReplay(t *testing.T) {
 	json1 := http.Header{"Content-Type": {"application/json"}}
 
-	t.Run("answers as recorded, an Accept the recording lacks and a body with a tag it leaves out too", func(t *testing.T) {
+	t.Run("answers as recorded, whatever Accept, and a body with a tag it leaves out too", func(t *testing.T) {
 		path := interactionsFile(t, cassette.Interactions{
 			recorded(t, http.MethodGet, "https://api.example.com/a", "", `{"id":"a"}`, http.Header{"Accept": {"application/json"}}),
 			recorded(t, http.MethodPost, "https://api.example.com/q", `{"filter":{"date":{"equals":"today"}}}`, `{}`, json1),
@@ -395,7 +395,7 @@ func TestReplay(t *testing.T) {
 		f := run(func(tb testing.TB) {
 			rt := &apitest.LastBody{Next: apitest.Replay(tb, path)}
 
-			rsp, err := call(tb, rt, t.Context(), http.MethodGet, "https://api.example.com/a", "", http.Header{"User-Agent": {"some tool"}, "Accept": {"application/json"}})
+			rsp, err := call(tb, rt, t.Context(), http.MethodGet, "https://api.example.com/a", "", http.Header{"User-Agent": {"some tool"}})
 			if err != nil {
 				tb.Fatal(err)
 			}
@@ -406,7 +406,7 @@ func TestReplay(t *testing.T) {
 				tb.Errorf("kept %s", rt.Body)
 			}
 
-			rsp, err = call(tb, rt, t.Context(), http.MethodPost, "https://api.example.com/q", `{"filter":{"type":"date","date":{"equals":"today"}}}`, http.Header{"Content-Type": {"application/json"}, "Accept": {"application/json"}})
+			rsp, err = call(tb, rt, t.Context(), http.MethodPost, "https://api.example.com/q", `{"filter":{"type":"date","date":{"equals":"today"}}}`, http.Header{"Content-Type": {"application/json"}, "Accept": {"text/html"}})
 			if err != nil {
 				tb.Fatal(err)
 			}
